@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="kk">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Арқан тартыш — Интерактивті математика (Full)</title>
+<style>
+  :root{
+    --bg:#fff9ec;
+    --gold:#d4a24a;
+    --dark:#2b2b2b;
+    --red:#d42f2f;
+    --blue:#1366d6;
+    --panel: rgba(255,255,255,0.95);
+    --accent:#f0e0b8;
+    --glass: rgba(255,255,255,0.6);
+    --soft-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    --progress-height:10px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#fff);font-family: 'Noto Sans', 'Segoe UI', Roboto, sans-serif;color:var(--dark);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1200px;margin:14px auto;padding:18px}
+  header{display:flex;align-items:center;gap:18px}
+  h1{margin:0;font-size:26px}
+  .sub{color:#6b4b2a}
+
+  .grid{display:grid;grid-template-columns:1fr 360px;gap:18px;margin-top:12px}
+  .board{background:var(--panel);border-radius:16px;padding:18px;box-shadow:var(--soft-shadow)}
+
+  .teams{display:flex;gap:12px;align-items:stretch}
+  .team-card{flex:1;padding:12px;border-radius:12px;display:flex;flex-direction:column;align-items:center;position:relative}
+  .team-card.red{background:linear-gradient(180deg,#fff6f6,#ffecec);border:2px solid rgba(212,47,47,0.08)}
+  .team-card.blue{background:linear-gradient(180deg,#f2f8ff,#eaf4ff);border:2px solid rgba(19,102,214,0.08)}
+  .label{font-weight:800;letter-spacing:0.6px}
+  .score{font-size:48px;font-weight:900;margin-top:6px}
+  .timer{margin-top:6px;font-weight:900;font-size:20px}
+  .timer.red{color:var(--red)}
+  .timer.blue{color:var(--blue)}
+
+  /* progress line */
+  .progress-wrap{width:90%;margin-top:12px;display:flex;flex-direction:column;gap:6px;align-items:center}
+  .progress-row{width:100%;display:flex;align-items:center;gap:10px}
+  .progress-track{flex:1;height:var(--progress-height);background:linear-gradient(90deg,#eee,#f7f7f7);border-radius:20px;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,0.6)}
+  .progress-bar{height:100%;width:0%;transition:width 700ms cubic-bezier(.2,.9,.2,1)}
+  .progress-label{min-width:48px;font-weight:700;text-align:center;font-size:14px}
+
+  /* rope area */
+  .tug-wrap{margin:18px 0;padding:12px;border-radius:12px;background:linear-gradient(180deg,rgba(240,224,184,0.12),rgba(255,255,255,0.6));border:1px solid rgba(200,170,80,0.06)}
+  .tug{position:relative;height:230px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .rail{width:92%;height:28px;background:linear-gradient(90deg,#cfa44a,#f7e7b0);border-radius:14px;position:relative;display:flex;align-items:center;justify-content:center}
+  .rope-core{position:absolute;height:100%;width:28%;background:repeating-linear-gradient(45deg,#8b5a2b 0 8px,#f4d9a6 8px 16px);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:900;color:white;box-shadow:0 6px 18px rgba(0,0,0,0.10);transition:transform 600ms cubic-bezier(.2,.9,.2,1)}
+  .knot{position:absolute;top:-36px;width:72px;height:72px;border-radius:50%;background:linear-gradient(180deg,#d89b49,#b76f2a);display:flex;align-items:center;justify-content:center;font-weight:900;color:white;box-shadow:0 12px 30px rgba(0,0,0,0.14);transition:transform 600ms cubic-bezier(.2,.9,.2,1)}
+  .svg-people{position:absolute;top:8px;width:100%;height:100%;pointer-events:none}
+  .person{width:120px;height:160px;display:inline-block;position:absolute;bottom:8px;transition:transform 600ms cubic-bezier(.2,.9,.2,1)}
+  .person.left{left:8px;transform-origin:bottom left}
+  .person.right{right:8px;transform-origin:bottom right}
+  .pull-label{position:absolute;top:6px;font-weight:900;opacity:0.95}
+
+  /* question / controls */
+  .question{margin-top:12px;padding:14px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.45),rgba(255,255,255,0.6));border:1px solid rgba(220,200,140,0.06)}
+  .qtext{font-size:20px;margin-bottom:8px;text-align:center}
+
+  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  input[type=text], input[type=number]{padding:10px;border-radius:10px;border:1px solid #d8d8d8;min-width:160px;font-size:16px}
+  .small{min-width:120px}
+  button{padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:800}
+  .btn-primary{background:var(--gold);color:#fff}
+  .btn-muted{background:transparent;border:1px solid rgba(0,0,0,0.06)}
+
+  .calc{margin-top:8px;padding:8px;border-radius:10px;background:#fff;border:1px solid #eee;display:flex;flex-direction:column;gap:8px;align-items:center;box-shadow:0 6px 18px rgba(0,0,0,0.04)}
+  .calc-screen{width:100%;padding:8px;border-radius:8px;border:1px solid #f0f0f0;text-align:right;font-weight:800;font-size:18px;background:linear-gradient(180deg,#fff,#fbfbfb)}
+  .calc-keys{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%}
+  .key{padding:10px;border-radius:8px;background:#fff;border:1px solid #eee;font-weight:800;cursor:pointer}
+  .key.op{background:#f7f7f7}
+  .key.red{background:var(--red);color:#fff}
+  .key.blue{background:var(--blue);color:#fff}
+
+  .message-box{position:fixed;left:50%;top:18px;transform:translateX(-50%);padding:12px 18px;border-radius:14px;background:rgba(0,0,0,0.75);color:#fff;font-weight:900;z-index:9999;opacity:0;pointer-events:none;transition:opacity 300ms}
+  .message-box.show{opacity:1}
+  .message-ok{background:linear-gradient(90deg,#2db84c,#23a14b)}
+  .message-wrong{background:linear-gradient(90deg,#d63f3f,#b42a2a)}
+
+  .history{max-height:360px;overflow:auto;margin-top:8px}
+  .row{padding:8px;border-bottom:1px solid #f1e7cf;color:#333;font-size:14px}
+
+  .confetti-canvas{position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:1000}
+
+  @media(max-width:1000px){
+    .grid{grid-template-columns:1fr}
+    .teams{flex-direction:column}
+    .person{display:none}
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Арқан тартыш — Математика (Full)</h1>
+        <div class="sub">Интерактивті тақта — Қызыл vs Көк · 20с таймер · орташа тапсырмалар</div>
+      </div>
+      <div style="margin-left:auto;align-self:center;color:#6b4b2a">Classroom · Нұсқа: интерактив</div>
+    </header>
+
+    <div class="grid">
+      <section class="board">
+        <div class="teams">
+          <!-- RED -->
+          <div class="team-card red" id="card-red">
+            <div class="label">Қызыл команда</div>
+            <div class="score" id="score-red">0</div>
+            <div class="timer red" id="timer-red">20s</div>
+
+            <div class="progress-wrap">
+              <div class="progress-row">
+                <div style="width:8px;height:8px;border-radius:50%;background:var(--red)"></div>
+                <div class="progress-track"><div class="progress-bar" id="progress-red" style="background:linear-gradient(90deg,var(--red),#ff8a8a)"></div></div>
+                <div class="progress-label" id="percent-red">0%</div>
+              </div>
+            </div>
+
+            <!-- Calculator for Red -->
+            <div class="calc" style="width:100%;margin-top:10px">
+              <div class="calc-screen" id="screen-red">0</div>
+              <div class="calc-keys" id="keys-red"></div>
+              <div style="width:100%;display:flex;gap:8px;margin-top:6px">
+                <button class="btn-primary" id="useAnswerRed">Жіберу (Қызыл)</button>
+                <button class="btn-muted" id="clearRed">Тазалау</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- BLUE -->
+          <div class="team-card blue" id="card-blue">
+            <div class="label">Көк команда</div>
+            <div class="score" id="score-blue">0</div>
+            <div class="timer blue" id="timer-blue">20s</div>
+
+            <div class="progress-wrap">
+              <div class="progress-row">
+                <div style="width:8px;height:8px;border-radius:50%;background:var(--blue)"></div>
+                <div class="progress-track"><div class="progress-bar" id="progress-blue" style="background:linear-gradient(90deg,var(--blue),#7fb9ff)"></div></div>
+                <div class="progress-label" id="percent-blue">0%</div>
+              </div>
+            </div>
+
+            <!-- Calculator for Blue -->
+            <div class="calc" style="width:100%;margin-top:10px">
+              <div class="calc-screen" id="screen-blue">0</div>
+              <div class="calc-keys" id="keys-blue"></div>
+              <div style="width:100%;display:flex;gap:8px;margin-top:6px">
+                <button class="btn-primary" id="useAnswerBlue">Жіберу (Көк)</button>
+                <button class="btn-muted" id="clearBlue">Тазалау</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- rope / svg people -->
+        <div class="tug-wrap">
+          <div class="tug">
+            <div class="rail" id="rail">
+              <div class="rope-core" id="ropeCore">АРҚАН</div>
+              <div class="knot" id="knot">🔗</div>
+            </div>
+
+            <svg class="svg-people" viewBox="0 0 900 230" preserveAspectRatio="xMidYMid meet">
+              <!-- left person (simple stylized SVG) -->
+              <g class="person left" id="person-left" transform="translate(30,30)">
+                <g>
+                  <circle cx="60" cy="30" r="20" fill="#f6d7c3"/>
+                  <rect x="40" y="50" width="40" height="60" rx="8" ry="8" fill="#b72b2b"/>
+                  <rect x="20" y="110" width="80" height="18" rx="8" fill="#8a1f1f"/>
+                </g>
+              </g>
+              <!-- right person -->
+              <g class="person right" id="person-right" transform="translate(770,30)">
+                <g>
+                  <circle cx="60" cy="30" r="20" fill="#d6ecff"/>
+                  <rect x="40" y="50" width="40" height="60" rx="8" ry="8" fill="#114fb2"/>
+                  <rect x="20" y="110" width="80" height="18" rx="8" fill="#0b3b82"/>
+                </g>
+              </g>
+            </svg>
+
+          </div>
+        </div>
+
+        <div class="question">
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+            <div style="flex:1">
+              <div style="font-weight:700">Тапсырма (орташа)</div>
+              <div class="qtext" id="questionText">Жүктелуде...</div>
+            </div>
+            <div style="min-width:220px">
+              <div style="font-weight:700;margin-bottom:6px">Қолмен тексеру</div>
+              <input id="manualAnswer" type="text" placeholder="Қолмен тексеру (міндетті емес)" style="width:100%;padding:8px;border-radius:8px;border:1px solid #eee">
+            </div>
+          </div>
+
+          <div class="controls" style="margin-top:12px">
+            <button id="newRound" class="btn-muted">Жаңа тапсырма</button>
+            <button id="skip" class="btn-muted">Өткізу</button>
+            <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+              Жеңу ұпайы:
+              <input id="maxPoints" type="number" value="15" style="width:80px;padding:6px;margin-left:8px;border-radius:6px;border:1px solid #eee">
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <aside>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <h3>Тарих</h3>
+          <div>
+            <button id="exportBtn" class="btn-muted">Экспорт</button>
+            <button id="resetBtn" class="btn-muted">Ресет</button>
+          </div>
+        </div>
+        <div class="history" id="history"></div>
+
+        <h3 style="margin-top:12px">Орнатулар</h3>
+        <div style="margin-top:8px">
+          Әуен (MP3 URL): <input id="musicUrl" type="text" placeholder="https://...mp3" style="width:100%;padding:6px;margin-top:6px;border-radius:6px;border:1px solid #eee">
+        </div>
+        <div style="margin-top:8px">Дыбыстар: <label><input id="soundCorrect" type="checkbox" checked> дұрыс</label> <label style="margin-left:8px"><input id="soundWrong" type="checkbox" checked> қате</label></div>
+        <div style="margin-top:8px">Анимат. арқан: <label><input id="ropeAnim" type="checkbox" checked></label></div>
+        <div style="margin-top:8px">Арқан дыбысы: <label><input id="ropeSound" type="checkbox" checked></label></div>
+
+        <div style="margin-top:10px;color:#6b4b2a">Ескерту: ойын локальді түрде сақталады (localStorage). Экспорт арқылы сақтап алуға болады.</div>
+      </aside>
+    </div>
+
+    <div class="footer">© Арқан — оқушыларға арналған. Қажет болса теңшеулер жасап беремін.</div>
+  </div>
+
+  <!-- messages / confetti -->
+  <div id="msgBox" class="message-box"></div>
+  <canvas id="confetti" class="confetti-canvas"></canvas>
+
+  <!-- sounds -->
+  <audio id="sound-correct" src="https://cdn.pixabay.com/download/audio/2021/10/26/audio_b5db3b9f8f.mp3?filename=correct-2-46133.mp3"></audio>
+  <audio id="sound-wrong" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_2de7b6b2f8.mp3?filename=wrong-6053.mp3"></audio>
+  <audio id="rope-sound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_ea7d2b0f6a.mp3?filename=rope-stretch-6052.mp3"></audio>
+  <audio id="bgm" loop></audio>
+
+<script>
+/* ===========================
+   FULL GAME LOGIC
+   =========================== */
+
+/* ---------- tasks (medium) ---------- */
+function genMediumTask(){
+  const r = Math.random();
+  if(r < 0.38){
+    const a = Math.floor(Math.random()*180) + 10; // 10..189
+    const b = Math.floor(Math.random()*90) + 5;  // 5..94
+    if(Math.random()<0.5) return {q: `${a} + ${b} = ?`, a: String(a + b)};
+    const big = Math.max(a,b), small = Math.min(a,b);
+    return {q: `${big} - ${small} = ?`, a: String(big - small)};
+  } else if(r < 0.72){
+    const a = Math.floor(Math.random()*13) + 6; // 6..18
+    const b = Math.floor(Math.random()*10) + 3; // 3..12
+    return {q: `${a} × ${b} = ?`, a: String(a * b)};
+  } else {
+    const b = Math.floor(Math.random()*11) + 3; // 3..13
+    const c = Math.floor(Math.random()*13) + 3; // 3..15
+    const a = b * c;
+    return {q: `${a} ÷ ${b} = ?`, a: String(c)};
+  }
+}
+const TASK_POOL = Array.from({length:500}, ()=>genMediumTask());
+
+/* ---------- state ---------- */
+const state = {
+  red: parseInt(localStorage.getItem('arkan_red')) || 0,
+  blue: parseInt(localStorage.getItem('arkan_blue')) || 0,
+  history: JSON.parse(localStorage.getItem('arkan_hist') || '[]'),
+  maxPoints: parseInt(localStorage.getItem('arkan_max')) || 15,
+  currentTask: null,
+  timers: { red: 20, blue: 20 }, // seconds remaining for each side current round
+  intervalId: null,
+  locked: false
+};
+
+/* ---------- elements ---------- */
+const scoreRedEl = document.getElementById('score-red');
+const scoreBlueEl = document.getElementById('score-blue');
+const timerRedEl = document.getElementById('timer-red');
+const timerBlueEl = document.getElementById('timer-blue');
+const qText = document.getElementById('questionText');
+const msgBox = document.getElementById('msgBox');
+const progressRed = document.getElementById('progress-red');
+const progressBlue = document.getElementById('progress-blue');
+const percentRed = document.getElementById('percent-red');
+const percentBlue = document.getElementById('percent-blue');
+const knot = document.getElementById('knot');
+const ropeCore = document.getElementById('ropeCore');
+const personLeft = document.getElementById('person-left');
+const personRight = document.getElementById('person-right');
+const confettiCanvas = document.getElementById('confetti');
+
+const soundCorrect = document.getElementById('sound-correct');
+const soundWrong = document.getElementById('sound-wrong');
+const ropeSound = document.getElementById('rope-sound');
+const bgm = document.getElementById('bgm');
+
+const keysRed = document.getElementById('keys-red');
+const keysBlue = document.getElementById('keys-blue');
+const screenRed = document.getElementById('screen-red');
+const screenBlue = document.getElementById('screen-blue');
+const useAnswerRed = document.getElementById('useAnswerRed');
+const useAnswerBlue = document.getElementById('useAnswerBlue');
+const clearRed = document.getElementById('clearRed');
+const clearBlue = document.getElementById('clearBlue');
+
+const newRoundBtn = document.getElementById('newRound');
+const skipBtn = document.getElementById('skip');
+const exportBtn = document.getElementById('exportBtn');
+const resetBtn = document.getElementById('resetBtn');
+const historyEl = document.getElementById('history');
+const maxPointsInput = document.getElementById('maxPoints');
+const musicUrl = document.getElementById('musicUrl');
+const soundCorrectChk = document.getElementById('soundCorrect');
+const soundWrongChk = document.getElementById('soundWrong');
+const ropeAnimChk = document.getElementById('ropeAnim');
+const ropeSoundChk = document.getElementById('ropeSound');
+
+/* ---------- persistence ---------- */
+function persist(){
+  localStorage.setItem('arkan_red', state.red);
+  localStorage.setItem('arkan_blue', state.blue);
+  localStorage.setItem('arkan_hist', JSON.stringify(state.history));
+  localStorage.setItem('arkan_max', state.maxPoints);
+}
+
+/* ---------- UI render ---------- */
+function renderScores(){
+  scoreRedEl.textContent = state.red;
+  scoreBlueEl.textContent = state.blue;
+  // update progress lines - each point = 100/ maxPoints percent
+  const pctPer = 100 / Math.max(1, state.maxPoints);
+  const pR = Math.min(100, Math.round(state.red * pctPer));
+  const pB = Math.min(100, Math.round(state.blue * pctPer));
+  progressRed.style.width = pR + '%';
+  progressBlue.style.width = pB + '%';
+  percentRed.textContent = pR + '%';
+  percentBlue.textContent = pB + '%';
+  updateRopePosition();
+  persist();
+}
+
+function renderHistory(){
+  historyEl.innerHTML = '';
+  state.history.slice().reverse().forEach(h=>{
+    const d = document.createElement('div');
+    d.className = 'row';
+    d.textContent = `${h.time} — ${h.team} : ${h.task} → ${h.result}`;
+    historyEl.appendChild(d);
+  });
+}
+
+/* ---------- messages ---------- */
+let msgTimeout = null;
+function showMsg(text, kind='ok', timeout=1400){
+  msgBox.className = 'message-box show';
+  msgBox.textContent = text;
+  if(kind === 'ok') msgBox.classList.add('message-ok'); else msgBox.classList.add('message-wrong');
+  if(msgTimeout) clearTimeout(msgTimeout);
+  msgTimeout = setTimeout(()=>{ msgBox.className = 'message-box'; msgBox.textContent=''; msgBox.classList.remove('message-ok','message-wrong'); }, timeout);
+}
+
+/* ---------- rope visuals ---------- */
+function updateRopePosition(){
+  const max = Math.max(1, state.maxPoints);
+  const balance = (state.red - state.blue) / max; // -1..1
+  const offset = balance * 40; // percent offset applied to transform
+  ropeCore.style.transform = `translateX(${offset}%)`;
+  knot.style.transform = `translateX(${offset}%)`;
+  // people tilt slightly
+  const leftTilt = Math.min(1, Math.max(0, (state.red - state.blue)/Math.max(1,state.maxPoints))) * 12;
+  const rightTilt = Math.min(1, Math.max(0, (state.blue - state.red)/Math.max(1,state.maxPoints))) * -12;
+  personLeft.style.transform = `translateY(${Math.min(10, Math.max(0, (state.red - state.blue)*2))}px) rotate(${leftTilt}deg)`;
+  personRight.style.transform = `translateY(${Math.min(10, Math.max(0, (state.blue - state.red)*2))}px) rotate(${rightTilt}deg)`;
+}
+
+/* ---------- confetti / fireworks ---------- */
+function startConfetti(duration=1500, count=120){
+  const c = confettiCanvas;
+  c.width = window.innerWidth;
+  c.height = window.innerHeight;
+  const ctx = c.getContext('2d');
+  const pieces = [];
+  for(let i=0;i<count;i++){
+    pieces.push({
+      x: Math.random()*c.width,
+      y: -20 - Math.random()*c.height,
+      dx: (Math.random()-0.5)*6,
+      dy: 2 + Math.random()*6,
+      r: 4 + Math.random()*8,
+      color: Math.random()>0.5 ? '#d42f2f' : '#1366d6'
+    });
+  }
+  const start = performance.now();
+  (function frame(now){
+    const t = now - start;
+    ctx.clearRect(0,0,c.width,c.height);
+    for(const p of pieces){
+      p.x += p.dx;
+      p.y += p.dy;
+      ctx.save();
+      ctx.translate(p.x,p.y);
+      ctx.rotate(Math.sin((p.x+p.y)/20));
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.r/2, -p.r/2, p.r, p.r*1.6);
+      ctx.restore();
+    }
+    if(t < duration) requestAnimationFrame(frame);
+    else ctx.clearRect(0,0,c.width,c.height);
+  })(start);
+}
+
+/* ---------- animations for hit / miss ---------- */
+function animatePull(team){
+  if(!ropeAnimChk.checked) return;
+  const dir = team === 'Қызыл' ? -1 : 1;
+  // small nudge
+  ropeCore.animate([{transform:'translateX(0)'},{transform:`translateX(${dir*8}%)`},{transform:'translateX(0)'}], {duration:420, easing:'ease-out'});
+  knot.animate([{transform:'translateX(0)'},{transform:`translateX(${dir*8}%)`},{transform:'translateX(0)'}], {duration:420, easing:'ease-out'});
+  // people pull stronger
+  const target = team === 'Қызыл' ? personLeft : personRight;
+  target.animate([{transform: target.style.transform+' rotate(0deg) scale(1)'},{transform: 'translateY(-8px) scale(1.06)'},{transform: target.style.transform}], {duration:600});
+  // rope sound
+  if(ropeSoundChk.checked){
+    try{ ropeSound.currentTime = 0; ropeSound.play(); }catch(e){}
+  }
+}
+
+/* ---------- check submission ---------- */
+function addHistoryEntry(team, task, result){
+  state.history.push({time: new Date().toLocaleTimeString(), team, task, result});
+  persist();
+  renderHistory();
+}
+
+function checkSubmission(team, answer){
+  if(state.locked) return;
+  if(!state.currentTask) { showMsg('Тапсырма жоқ', 'bad'); return; }
+  if(answer === null || answer === undefined || answer === '') { showMsg('Жауап енгізіңіз', 'bad'); return; }
+  const ok = String(answer).trim() === String(state.currentTask.a);
+  addHistoryEntry(team, state.currentTask.q, ok ? 'Дұрыс' : 'Қате');
+  if(ok){
+    if(team === 'Қызыл') state.red++; else state.blue++;
+    if(soundCorrectChk.checked){ try{ soundCorrect.currentTime=0; soundCorrect.play(); }catch(e){} }
+    showMsg('Жарайсың!', 'ok');
+    animatePull(team);
+    startConfetti(900, 30);
+    // reset both timers for next round
+    state.timers.red = 20;
+    state.timers.blue = 20;
+  } else {
+    if(soundWrongChk.checked){ try{ soundWrong.currentTime=0; soundWrong.play(); }catch(e){} }
+    showMsg('Қате', 'bad');
+    // brief lock of this team's input to give animation effect (1.2s)
+    lockTeamButtons(team, 1200);
+    // small nudge to opposite side to show lost tension
+    animatePull(team === 'Қызыл' ? 'Көк' : 'Қызыл');
+  }
+  renderScores();
+  // check win
+  if(checkWin()) return;
+  // new task shortly
+  setTimeout(()=> {
+    state.currentTask = pickTask();
+    qText.textContent = state.currentTask.q;
+  }, 500);
+}
+
+/* ---------- win check ---------- */
+function checkWin(){
+  if(state.red >= state.maxPoints || state.blue >= state.maxPoints){
+    const winner = state.red >= state.maxPoints ? 'Қызыл команда' : 'Көк команда';
+    showMsg(`${winner} жеңді!`, 'ok', 4000);
+    startConfetti(2500, 200);
+    state.locked = true;
+    setTimeout(()=>{ state.locked = false; }, 3500);
+    return true;
+  }
+  return false;
+}
+
+/* ---------- timers (20s each) ---------- */
+let globalTicker = null;
+function startTimers(){
+  if(globalTicker) clearInterval(globalTicker);
+  globalTicker = setInterval(()=>{
+    // decrease each active timer if >0
+    if(state.timers.red > 0) state.timers.red -= 1;
+    if(state.timers.blue > 0) state.timers.blue -= 1;
+    updateTimersUI();
+    // if a timer hits 0, automatic miss for that team and reset timer
+    if(state.timers.red === 0){
+      addHistoryEntry('Қызыл', state.currentTask ? state.currentTask.q : '-', 'Уақыт аяқталды');
+      showMsg('Қызыл — уақыт аяқталды', 'bad');
+      // brief lock
+      lockTeamButtons('Қызыл', 800);
+      state.timers.red = 20;
+      // new task
+      state.currentTask = pickTask();
+      qText.textContent = state.currentTask.q;
+      renderScores();
+    }
+    if(state.timers.blue === 0){
+      addHistoryEntry('Көк', state.currentTask ? state.currentTask.q : '-', 'Уақыт аяқталды');
+      showMsg('Көк — уақыт аяқталды', 'bad');
+      lockTeamButtons('Көк', 800);
+      state.timers.blue = 20;
+      state.currentTask = pickTask();
+      qText.textContent = state.currentTask.q;
+      renderScores();
+    }
+  }, 1000);
+}
+function resetTimers(){
+  state.timers.red = 20;
+  state.timers.blue = 20;
+  updateTimersUI();
+}
+function updateTimersUI(){
+  timerRedEl.textContent = state.timers.red + 's';
+  timerBlueEl.textContent = state.timers.blue + 's';
+}
+
+/* ---------- helpers ---------- */
+function pickTask(){ return TASK_POOL[Math.floor(Math.random()*TASK_POOL.length)]; }
+function disableAll(b){
+  useAnswerRed.disabled = b;
+  useAnswerBlue.disabled = b;
+  newRoundBtn.disabled = b;
+  skipBtn.disabled = b;
+}
+function lockTeamButtons(team, ms){
+  if(team === 'Қызыл') useAnswerRed.disabled = true; else useAnswerBlue.disabled = true;
+  setTimeout(()=> {
+    if(team === 'Қызыл') useAnswerRed.disabled = false; else useAnswerBlue.disabled = false;
+  }, ms);
+}
+
+/* ---------- calculators implementation ---------- */
+const calcKeys = [
+  '7','8','9','⌫',
+  '4','5','6','÷',
+  '1','2','3','×',
+  '0','.','-','+',
+  '(',')','=','C'
+];
+
+function createCalculator(keysContainer, screenEl, teamTag){
+  let expr = '';
+  function render(){ screenEl.textContent = expr || '0'; }
+  function press(k){
+    if(k === 'C'){ expr = ''; render(); return; }
+    if(k === '⌫'){ expr = expr.slice(0,-1); render(); return; }
+    if(k === '='){
+      try{
+        const safe = expr.replace(/×/g,'*').replace(/÷/g,'/').replace(/[^0-9+\-*/().]/g,'');
+        const value = Function('"use strict";return ('+safe+')')();
+        expr = (typeof value === 'number' && isFinite(value)) ? String(Number(Math.round(value*100000)/100000)) : '0';
+      } catch(e){ expr = 'ERR'; }
+      render();
+      return;
+    }
+    expr += k;
+    render();
+  }
+  keysContainer.innerHTML = '';
+  calcKeys.forEach(k=>{
+    const b = document.createElement('button');
+    b.className = 'key';
+    if(k === 'C') b.classList.add(teamTag === 'red' ? 'red' : 'blue');
+    if(k === '=') b.classList.add('op');
+    b.textContent = k;
+    b.addEventListener('click', ()=> press(k));
+    keysContainer.appendChild(b);
+  });
+  return {
+    getValue(){ return expr; },
+    getNumeric(){
+      try{
+        const safe = expr.replace(/×/g,'*').replace(/÷/g,'/').replace(/[^0-9+\-*/().]/g,'');
+        const val = Function('"use strict";return ('+safe+')')();
+        if(typeof val === 'number' && isFinite(val)) return String(Number(Math.round(val*100000)/100000));
+      }catch(e){}
+      return expr;
+    },
+    clear(){ expr = ''; render(); },
+    set(v){ expr = String(v); render(); }
+  };
+}
+
+const calcRed = createCalculator(keysRed, screenRed, 'red');
+const calcBlue = createCalculator(keysBlue, screenBlue, 'blue');
+
+useAnswerRed.addEventListener('click', ()=> {
+  const val = calcRed.getNumeric();
+  checkSubmission('Қызыл', val);
+  calcRed.clear();
+  // reset this team's timer on attempt
+  state.timers.red = 20;
+  updateTimersUI();
+});
+useAnswerBlue.addEventListener('click', ()=> {
+  const val = calcBlue.getNumeric();
+  checkSubmission('Көк', val);
+  calcBlue.clear();
+  state.timers.blue = 20;
+  updateTimersUI();
+});
+clearRed.addEventListener('click', ()=> calcRed.clear());
+clearBlue.addEventListener('click', ()=> calcBlue.clear());
+
+/* ---------- controls wiring ---------- */
+newRoundBtn.addEventListener('click', ()=>{
+  state.currentTask = pickTask();
+  qText.textContent = state.currentTask.q;
+  // reset timers
+  state.timers.red = 20; state.timers.blue = 20;
+  updateTimersUI();
+});
+skipBtn.addEventListener('click', ()=>{
+  if(!state.currentTask) { state.currentTask = pickTask(); qText.textContent = state.currentTask.q; return; }
+  addHistoryEntry('Өткізілді', state.currentTask.q, 'Өткізілді');
+  state.currentTask = pickTask();
+  qText.textContent = state.currentTask.q;
+  // reset timers a bit
+  state.timers.red = 20; state.timers.blue = 20;
+  updateTimersUI();
+});
+exportBtn.addEventListener('click', ()=>{
+  const data = JSON.stringify(state, null, 2);
+  const blob = new Blob([data],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'arkan_state.json'; a.click(); URL.revokeObjectURL(url);
+});
+resetBtn.addEventListener('click', ()=>{
+  if(!confirm('Барлығын тазалағыңыз келеді ме?')) return;
+  state.red = 0; state.blue = 0; state.history = []; state.currentTask = pickTask();
+  state.timers.red = 20; state.timers.blue = 20;
+  persist(); renderScores(); renderHistory();
+  qText.textContent = state.currentTask.q;
+});
+
+maxPointsInput.addEventListener('change', ()=>{
+  const v = parseInt(maxPointsInput.value) || 15;
+  state.maxPoints = Math.max(1, v);
+  persist(); renderScores();
+});
+
+// music URL
+musicUrl.addEventListener('change', ()=>{
+  const url = musicUrl.value.trim();
+  if(!url){ bgm.pause(); bgm.src=''; localStorage.removeItem('arkan_music'); return; }
+  bgm.src = url;
+  localStorage.setItem('arkan_music', url);
+  bgm.play().catch(()=> {});
+});
+
+/* ---------- keyboard shortcuts ---------- */
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'r') useAnswerRed.click();
+  if(e.key === 'b') useAnswerBlue.click();
+  if(e.key === 'n') newRoundBtn.click();
+});
+
+/* ---------- init ---------- */
+function init(){
+  const mus = localStorage.getItem('arkan_music');
+  if(mus){ musicUrl.value = mus; bgm.src = mus; }
+
+  if(!state.currentTask) state.currentTask = pickTask();
+  qText.textContent = state.currentTask.q;
+  renderScores();
+  renderHistory();
+  resetTimers();
+  startTimers();
+  window.addEventListener('resize', ()=> { confettiCanvas.width = window.innerWidth; confettiCanvas.height = window.innerHeight; });
+}
+init();
+
+/* ---------- small UX polish: clicking rope copies task ---------- */
+ropeCore.addEventListener('click', ()=> {
+  const t = state.currentTask ? state.currentTask.q : '';
+  if(t && navigator.clipboard) navigator.clipboard.writeText(t).then(()=> showMsg('Тапсырма буферге көшірілді'), ()=>{});
+});
+
+</script>
+</body>
+</html>
